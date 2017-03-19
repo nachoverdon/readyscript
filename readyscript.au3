@@ -1,6 +1,6 @@
 #NoTrayIcon
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Icon=C:\Users\bazoo\Desktop\readyscript source code\ico\readyscript.ico
+#AutoIt3Wrapper_Icon=.\ico\readyscript.ico
 #AutoIt3Wrapper_Outfile=readyscript.exe
 #AutoIt3Wrapper_Compression=4
 #AutoIt3Wrapper_UseUpx=n
