@@ -432,10 +432,10 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 			Next
 		; Still playing 2nd half rounds
 		Else
-			$sMessage = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[21]", ""), "%Score2%", $aScoreRead[1]), "%Score1%", $aScoreRead[0])
+			$sMessage = StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[21]", ""), "%Score2%", $aScoreRead[1]), "%Score1%", $aScoreRead[0])
 			$sMessage = StringReplace(StringReplace($sMessage, "%SumScore1%", $OldScore1 + $aScoreRead[1]), "%SumScore2%", $OldScore2 + $aScoreRead[0])
 			$CurrentScore = $sMessage
-			_GameServerSendMessage($sMessage)
+			_GameServerSendMessage("say " & $sMessage)
 		EndIf
 	EndIf
 EndFunc   ;==>_EvaluatePaketScore
