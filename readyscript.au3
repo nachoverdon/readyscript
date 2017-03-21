@@ -384,7 +384,7 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 	; 1st half of the match or overtime
 	If $iNr = 2 Or $iNr = 6 Then
 		; 1st half finishes
-		If $aScoreRead[0] + $aScoreRead[1] = IniRead("config.ini", "Script", "mr", "") Then
+		If $aScoreRead[0] + $aScoreRead[1] = IniRead("config.ini", "Script", $sAdd & "mr", "") Then
 			_GameServerSendMessage("say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[11]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1]))
 			$sMessage = StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1])
 			$CurrentScore = $sMessage
