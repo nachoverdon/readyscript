@@ -400,9 +400,9 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 			Next
 		; Still playing 1st half rounds
 		Else
-			$sMessage = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1])
+			$sMessage = StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1])
 			$CurrentScore = $sMessage
-			_GameServerSendMessage($sMessage)
+			_GameServerSendMessage("say " & $sMessage)
 		EndIf
 	; 2nd half match or overtime
 	ElseIf $iNr = 4 Or $iNr = 8 Then
