@@ -92,18 +92,21 @@ Global $OldScore1, $OldScore2, $CurrentScore = ''
 Global $Ready[IniRead("config.ini", "Script", "players", 10) + 1]
 OnAutoItExitRegister("_ReadyScriptExit")
 
-If StringRegExp($FullIP, "\d+.\d+.\d+.\d+:\d+") Then ; IP with port (123.123.123.123:12345)
+; IP with port (123.123.123.123:12345)
+If StringRegExp($FullIP, "\d+.\d+.\d+.\d+:\d+") Then
 	$aRegExp = StringRegExp($FullIP, "(\d+.\d+.\d+.\d+):(\d+)", 3)
 	If Not IsArray($aRegExp) Then Exit
 	$IP[1] = $aRegExp[0]
 	$IP[2] = $aRegExp[1]
-ElseIf StringRegExp($FullIP, "{\d+.\d+.\d+.\d+}") Then ; IP without port (123.123.123.123). Uses 27015 as default.
+; IP without port (123.123.123.123). Uses 27015 as default.
+ElseIf StringRegExp($FullIP, "{\d+.\d+.\d+.\d+}") Then
 	_GUICtrlEdit_InsertText($Edit, "No port given. Using default port 27015." & @CRLF)
 	$aRegExp = StringRegExp($FullIP, "(\d+.\d+.\d+.\d+)", 3)
 	If Not IsArray($aRegExp) Then Exit
 	$IP[1] = $aRegExp[0]
 	$IP[2] = 27015
-ElseIf StringRegExp($FullIP, "\w+\.\D+:\d+") Then ; Host with port (justht.ml:27015)
+; Host with port (getrdy.win:27015)
+ElseIf StringRegExp($FullIP, "\w+\.\D+:\d+") Then
 	$aRegExp = StringRegExp($FullIP, "(\w+\.\D+):(\d+)", 3)
 	If Not IsArray($aRegExp) Then Exit
 	TCPStartup()
@@ -111,7 +114,8 @@ ElseIf StringRegExp($FullIP, "\w+\.\D+:\d+") Then ; Host with port (justht.ml:27
 	$IP[1] = TCPNameToIP($aRegExp[0])
 	$IP[2] = $aRegExp[1]
 	_GUICtrlEdit_InsertText($Edit, "Host resolved. IP: " & $IP[1] & " Port: " & $IP[2] &@CRLF)
-ElseIf StringRegExp($FullIP, "\w+\.\D+[^:]") Then ; Host without port (justht.ml:27015). Uses 27015 as default.
+; Host without port (getrdy.win:27015). Uses 27015 as default.
+ElseIf StringRegExp($FullIP, "\w+\.\D+[^:]") Then
 	_GUICtrlEdit_InsertText($Edit, "No port given. Using default port 27015." & @CRLF)
 	$aRegExp = StringRegExp($FullIP, "(\w+\.\D+[^:])", 3)
 	If Not IsArray($aRegExp) Then Exit
@@ -168,10 +172,10 @@ While True
 				; Warmup of the 1st half of overtime
 				ElseIf $ReadyStatus = 5 Then
 					;GameServerSendMessage("say " & IniRead("config.ini", "Messages", "message[41]", ""))
-					_GameServerSendMessage("say OVERALL: X-X")
+					_GameServerSendMessage("say " & $CurrentScore)
 				; Warmup of the 2nd half of overtime
 				ElseIf $ReadyStatus = 7 Then
-					_GameServerSendMessage("say OVERALL: X-X (FIRST HALF: Y-Y)")
+					_GameServerSendMessage("say " & $CurrentScore)
 				EndIf
 			EndIf
 
@@ -184,10 +188,6 @@ While True
 			;If StringInStr($UDP_Recv, '" say "' & $Commands[18] & '"') Then _GameServerSendMessage($CurrentScore)
 
 			; Score
-			; TODO: 2nd half, and overtime should also say the score of the 1st half or overall score
-			; 2nd half should say score x-x (previous half: y-y)
-			; 1st half ot should say x-x (overall: y-y)
-			; 2nd half ot should say x-x (previous: y-y) (overall: z-z)
 			If StringInStr($UDP_Recv, '" say "' & $Commands[18] & '"') Then
 				; 1st half of the match or overtime
 				If $ReadyStatus = 2 Or $ReadyStatus = 6 Then
@@ -199,22 +199,17 @@ While True
 						_GameServerSendMessage("say " & $CurrentScore)
 					EndIf
 
-				; 1st or 2nd half of the overtime
+				; 2nd half of the match or overtime
 				ElseIf $ReadyStatus = 4 Or $ReadyStatus = 8 Then
-					$score = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[21]", ""), "%Score2%", "0"), "%Score1%", "0")
-					$score = StringReplace(StringReplace($score, "%SumScore1%", $OldScore1), "%SumScore2%", $OldScore2)
-					_GameServerSendMessage($score)
-					$score = ""
+					If $CurrentScore = "" Then
+						$score = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[21]", ""), "%Score2%", "0"), "%Score1%", "0")
+						$score = StringReplace(StringReplace($score, "%SumScore1%", $OldScore1), "%SumScore2%", $OldScore2)
+						_GameServerSendMessage($score)
+						$score = ""
+					Else
+						_GameServerSendMessage("say " & $CurrentScore)
+					EndIf
 				EndIf
-				#cs
-				; Say 0-0 if match started but there's no score yet
-				If $CurrentScore = "" Then
-					_GameServerSendMessage("say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", "0"), "%Score2%", "0"))
-				; Normal score
-				Else
-					_GameServerSendMessage("say " & $CurrentScore)
-				EndIf
-				#ce
 			EndIf
 
 			; Round end score
@@ -295,21 +290,16 @@ Func _EvaluatePaketReady($sPaket, $bForce = False, $bRestart = False)
 		$ReadyStatus += 1
 		If $ReadyStatus = 2 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[14]", "")
-			_GameServerSendMessage($sMessage)
-			Sleep(10)
 		ElseIf $ReadyStatus = 4 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[15]", "")
-			_GameServerSendMessage($sMessage)
-			Sleep(10)
 		ElseIf $ReadyStatus = 6 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[46]", "")
-			_GameServerSendMessage($sMessage)
-			Sleep(10)
 		ElseIf $ReadyStatus = 8 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[47]", "")
-			_GameServerSendMessage($sMessage)
-			Sleep(10)
 		EndIf
+		_GameServerSendMessage($sMessage)
+		$CurrentScore = ""
+		Sleep(10)
 	Else
 		If $ReadyStatus = 2 Or $ReadyStatus = 6 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[17]", "")
@@ -318,6 +308,7 @@ Func _EvaluatePaketReady($sPaket, $bForce = False, $bRestart = False)
 		ElseIf $ReadyStatus = 4 Or $ReadyStatus = 8 Then
 			$sMessage = "say " & IniRead("config.ini", "Messages", "message[18]", "")
 			_GameServerSendMessage($sMessage)
+			$CurrentScore = ""
 			Sleep(10)
 		EndIf
 	EndIf
@@ -390,19 +381,18 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 	If Not IsArray($aScoreRead) Then Return
 	; In overtime
 	If $iNr = 6 Or $iNr = 8 Then $sAdd = "ot"
-	; 1st half match or overtime
+	; 1st half of the match or overtime
 	If $iNr = 2 Or $iNr = 6 Then
-		; 1st half draw
-		If $aScoreRead[0] + $aScoreRead[1] = IniRead("config.ini", "Script", $sAdd & "mr", "") Then
-			$sMessage = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1])
+		; 1st half finishes
+		If $aScoreRead[0] + $aScoreRead[1] = IniRead("config.ini", "Script", "mr", "") Then
+			_GameServerSendMessage("say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[11]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1]))
+			$sMessage = StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1])
 			$CurrentScore = $sMessage
-			_GameServerSendMessage($sMessage)
+			_GameServerSendMessage("say " & $sMessage)
 			$OldScore1 = $aScoreRead[0]
 			$OldScore2 = $aScoreRead[1]
-			_GameServerSendMessage("say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[11]", ""), "%Score1%", $aScoreRead[0]), "%Score2%", $aScoreRead[1]))
 			$ReadyStatus += 1
-			; I think this line was preventing the score to be displayed between halfs
-			;$CurrentScore = ''
+			; $CurrentScore = ''
 			Sleep(1000)
 			_GameServerSetWarmup('')
 			For $i = 1 To IniRead("config.ini", "Script", "players", "")
@@ -420,10 +410,11 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 		If $aScoreRead[1] + $OldScore1 = IniRead("config.ini", "Script", $sAdd & "mr", "") And $aScoreRead[0] + $OldScore2 = IniRead("config.ini", "Script", $sAdd & "mr", "") Then
 			$sMessage = "say " & StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[45]", ""), "%SumScore1%", $aScoreRead[1] + $OldScore1), "%SumScore2%", $aScoreRead[0] + $OldScore2)
 			_GameServerSendMessage($sMessage)
-			$CurrentScore = "Team A  " & $OldScore1 + $aScoreRead[1] & " - " & $OldScore2 + $aScoreRead[0] & "  Team B"
+			$CurrentScore = StringReplace(StringReplace(IniRead("config.ini", "Messages", "message[20]", ""), "%Score1%", $aScoreRead[1] + $OldScore1), "%Score2%", $aScoreRead[0] + $OldScore2)
 			$ReadyStatus += 1
 			If $ReadyStatus = 9 Then $ReadyStatus = 5
 			Sleep(1000)
+			_GameServerSetWarmup('')
 			For $i = 1 To IniRead("config.ini", "Script", "players", "")
 				$Ready[$i] = ""
 			Next
@@ -433,6 +424,8 @@ Func _EvaluatePaketScore($sPaket, $iNr)
 			_GameServerSendMessage($sMessage)
 			$ReadyStatus = 1
 			$CurrentScore = ''
+			$OldScore1 = 0
+			$OldScore2 = 0
 			Sleep(1000)
 			For $i = 1 To IniRead("config.ini", "Script", "players", "")
 				$Ready[$i] = ""
@@ -611,6 +604,8 @@ Func _GameServerRestart($sPaket)
 	If _IsAdmin($sPaket) = False Then Return
 	$ReadyStatus = 1
 	$CurrentScore = ''
+	$OldScore1 = 0
+	$OldScore2 = 0
 	$sMessage = "say " & IniRead("config.ini", "Messages", "message[49]", "")
 	_GameServerSendMessage($sMessage)
 	Sleep(50)
@@ -638,6 +633,9 @@ Func _GameServerSetMaxRounds($sPaket)
 	_GameServerSendMessage($sMessage)
 	If $ReadyStatus <> 1 And $ReadyStatus <> 3 Then _GameServerSetWarmup('')
 	$ReadyStatus = 1
+	$OldScore1 = 0
+	$OldScore2 = 0
+	$CurrentScore = 0
 EndFunc   ;==>_GameServerSetMaxRounds
 
 Func _GameServerKickAndAdmin($sPaket, $iNr)
