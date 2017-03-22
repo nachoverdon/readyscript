@@ -44,8 +44,7 @@ GUICtrlSetState($Label, 256)
 GUISetState()
 
 _GUICtrlEdit_InsertText($Edit, _
-"readyscript by aquila - v3.0" & @CRLF & _
-"modified by bazoo" & _
+"readyscript - by aquila" & @CRLF & _
 @CRLF & @CRLF)
 
 Global $Commands[24]
